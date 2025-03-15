@@ -1,0 +1,65 @@
+logging:
+  level:
+    ROOT: INFO
+    com.mfm.user.user_service.client: ${CLIENT_LOG_LEVEL:DEBUG}
+  include-application-name: false
+  pattern:
+    correlation: '[%X{X-Trace-Id:-}]'
+
+server:
+  port: ${PORT:8081}
+  servlet:
+    context-path: /user/api
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
+    username: postgres
+    password: 123456
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database: POSTGRESQL
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 50
+        order_inserts: true
+    hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: 'none'
+  liquibase:
+    enabled: false
+    default-schema: ms_user
+    change-log: classpath:db/changelog-master.xml
+  cloud:
+    openfeign:
+      compression:
+        request:
+          enabled: true
+        response:
+          enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
+            loggerLevel: full
+            requestInterceptors:
+              - com.mfm.user.user_service.client.interceptor.DefaultInterceptor
+          access-client:
+            url: http://localhost:8082/access/api
+            defaultRequestHeaders:
+              Authorization: none
+            requestInterceptors:
+              - com.mfm.user.user_service.client.interceptor.AccessInterceptor
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers
