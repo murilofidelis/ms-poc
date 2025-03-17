@@ -16,6 +16,8 @@ import java.util.UUID;
 @Configuration
 public class AppFilter {
 
+    public static final String TRACE_ID = "X-Trace-Id";
+
     @Bean
     public FilterRegistrationBean<AppFilterIntercept> filter() {
         FilterRegistrationBean<AppFilterIntercept> registrationBean = new FilterRegistrationBean<>();
@@ -25,8 +27,6 @@ public class AppFilter {
     }
 
     static class AppFilterIntercept extends OncePerRequestFilter {
-
-        private static final String TRACE_ID = "X-Trace-Id";
 
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {

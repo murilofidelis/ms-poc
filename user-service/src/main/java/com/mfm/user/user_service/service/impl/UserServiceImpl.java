@@ -6,8 +6,10 @@ import com.mfm.user.user_service.domain.User;
 import com.mfm.user.user_service.domain.dto.DUser;
 import com.mfm.user.user_service.repository.UserRepository;
 import com.mfm.user.user_service.service.UserService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -32,6 +34,16 @@ public class UserServiceImpl implements UserService {
 
     private DAccess createAccess(DUser user) {
         var accessRequest = new DAccess(user.getUserName(), user.getPassword());
-        return client.createAccess(accessRequest);
+        try {
+            return client.createAccess(accessRequest);
+        } catch (FeignException.FeignClientException e) {
+            if (e.status() == HttpStatus.BAD_REQUEST.value()) {
+                log.error("User exists");
+                throw e;
+            }
+            throw e;
+        } catch (RuntimeException ex) {
+            throw ex;
+        }
     }
 }

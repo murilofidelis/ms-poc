@@ -13,6 +13,8 @@ server:
 spring:
   application:
     name: access-service
+  messages:
+    basename: i18n/messages
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_access
