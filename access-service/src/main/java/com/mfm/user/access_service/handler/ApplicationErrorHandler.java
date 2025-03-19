@@ -1,6 +1,7 @@
 package com.mfm.user.access_service.handler;
 
 import com.mfm.user.access_service.util.Message;
+import com.mfm.user.access_service.util.PackageClassLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
@@ -9,8 +10,9 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.mfm.user.access_service.filter.AppFilter.TRACE_ID;
 
@@ -18,12 +20,28 @@ import static com.mfm.user.access_service.filter.AppFilter.TRACE_ID;
 public class ApplicationErrorHandler {
 
     private final Message message;
-    private final List<Class<? extends Exception>> businessExceptions;
+    private final Set<Class<?>> businessExceptions;
 
-    public ApplicationErrorHandler(Message message, List<Class<? extends Exception>> businessExceptions) {
+    public ApplicationErrorHandler(Message message, String[] businessExceptionsPackageScan) {
         log.info("Create ApplicationErrorHandler");
         this.message = message;
-        this.businessExceptions = businessExceptions;
+        this.businessExceptions = new HashSet<>();
+        this.loadExceptionsClasses(businessExceptionsPackageScan);
+    }
+
+    private void loadExceptionsClasses(String[] packsScan) {
+        for (String pack : packsScan) {
+            Set<Class<?>> loadedClasses = PackageClassLoader.findAllClassesUsingClassLoader(pack);
+            if (loadedClasses == null || loadedClasses.isEmpty()) {
+                return;
+            }
+            loadedClasses.forEach(loadClass -> {
+                boolean isException = Exception.class.isAssignableFrom(loadClass);
+                if (isException) {
+                    businessExceptions.add(loadClass);
+                }
+            });
+        }
     }
 
     public ApiError buildError(Exception exception, NativeWebRequest request) {
@@ -75,7 +93,7 @@ public class ApplicationErrorHandler {
 
     private HttpStatus getStatus(AppException appException) {
         if (appException != null) {
-            return appException.httpStatus();
+            return HttpStatus.valueOf(appException.httpStatusCod());
         }
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }

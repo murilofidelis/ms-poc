@@ -1,18 +1,24 @@
 package com.mfm.user.access_service.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AccessingAllClassesInPackage {
+@Slf4j
+public class PackageClassLoader {
 
-    private AccessingAllClassesInPackage() {
+    private PackageClassLoader() {
     }
 
-    public static Set<Class> findAllClassesUsingClassLoader(String packageName) {
+    public static Set<Class<?>> findAllClassesUsingClassLoader(String packageName) {
         InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(packageName.replaceAll("[.]", "/"));
+        if (stream == null) {
+            return Set.of();
+        }
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         return reader.lines()
                 .filter(line -> line.endsWith(".class"))
@@ -20,11 +26,11 @@ public class AccessingAllClassesInPackage {
                 .collect(Collectors.toSet());
     }
 
-    private static Class getClass(String className, String packageName) {
+    private static Class<?> getClass(String className, String packageName) {
         try {
             return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
         } catch (ClassNotFoundException e) {
-            // handle the exception
+            log.error("Class not found: {} in {}", className, packageName);
         }
         return null;
     }

@@ -57,6 +57,7 @@ spring:
               Authorization: none
             requestInterceptors:
               - com.mfm.user.user_service.client.interceptor.AccessInterceptor
+            errorDecoder: com.mfm.user.user_service.client.decode.AccessErrorDecoder
 
 management:
   endpoints:
