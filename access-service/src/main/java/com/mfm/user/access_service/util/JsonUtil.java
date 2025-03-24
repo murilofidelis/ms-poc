@@ -1,4 +1,4 @@
-package com.mfm.user.user_service.util;
+package com.mfm.user.access_service.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

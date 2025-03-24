@@ -10,7 +10,6 @@ import java.io.InputStream;
 
 public class AccessErrorDecoder implements ErrorDecoder {
 
-
     @Override
     public Exception decode(String methodKey, Response response) {
 
@@ -18,11 +17,9 @@ public class AccessErrorDecoder implements ErrorDecoder {
 
             ApiError accessApiError = JsonUtil.toObject(bodyIs, ApiError.class);
 
-
         } catch (IOException e) {
             return new Exception(e.getMessage());
         }
-
 
         return null;
     }

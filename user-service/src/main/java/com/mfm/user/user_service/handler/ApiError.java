@@ -1,4 +1,4 @@
-package com.mfm.user.access_service.handler;
+package com.mfm.user.user_service.handler;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

@@ -8,6 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,9 +32,12 @@ public class User implements Serializable {
     @Column(name = "ID")
     private Integer id;
 
+    @NotNull
+    @Size(max = 60)
     @Column(name = "NAME")
     private String name;
 
+    @Size(max = 200)
     @Column(name = "EMAIL")
     private String email;
 

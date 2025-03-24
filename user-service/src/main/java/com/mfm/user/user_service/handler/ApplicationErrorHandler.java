@@ -1,8 +1,8 @@
-package com.mfm.user.access_service.handler;
+package com.mfm.user.user_service.handler;
 
-import com.mfm.user.access_service.util.JsonUtil;
-import com.mfm.user.access_service.util.Message;
-import com.mfm.user.access_service.util.PackageClassLoader;
+import com.mfm.user.user_service.util.JsonUtil;
+import com.mfm.user.user_service.util.Message;
+import com.mfm.user.user_service.util.PackageClassLoader;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -18,7 +18,8 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
 
-import static com.mfm.user.access_service.filter.AppFilter.TRACE_ID;
+import static com.mfm.user.user_service.filter.AppFilter.TRACE_ID;
+
 
 @Slf4j
 public class ApplicationErrorHandler {
@@ -81,7 +82,7 @@ public class ApplicationErrorHandler {
 
         URI instance = getInstance(request);
 
-        if (apiError != null && apiError.getMsgCod() != null) {
+        if (apiError != null && (apiError.getMsgCod() != null || apiError.getErrors() != null)) {
 
             apiError.setInstance(instance);
 
@@ -244,4 +245,5 @@ public class ApplicationErrorHandler {
                                      String cause) {
 
     }
+
 }

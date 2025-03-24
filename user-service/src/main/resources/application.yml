@@ -14,6 +14,8 @@ server:
 spring:
   application:
     name: user-service
+  messages:
+    basename: i18n/messages
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
@@ -57,7 +59,7 @@ spring:
               Authorization: none
             requestInterceptors:
               - com.mfm.user.user_service.client.interceptor.AccessInterceptor
-            errorDecoder: com.mfm.user.user_service.client.decode.AccessErrorDecoder
+            #errorDecoder: com.mfm.user.user_service.client.decode.AccessErrorDecoder
 
 management:
   endpoints:
