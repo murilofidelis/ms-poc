@@ -7,6 +7,9 @@ import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,12 +19,17 @@ import org.springframework.web.context.request.WebRequest;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.mfm.user.access_service.filter.AppFilter.TRACE_ID;
 
 @Slf4j
 public class ApplicationErrorHandler {
+
 
     private final Message message;
     private final Set<Class<?>> businessExceptions;
@@ -42,7 +50,7 @@ public class ApplicationErrorHandler {
             loadedClasses.forEach(loadClass -> {
                 boolean isException = Exception.class.isAssignableFrom(loadClass);
                 if (isException) {
-                    businessExceptions.add(loadClass);
+                    this.businessExceptions.add(loadClass);
                 }
             });
         }
@@ -50,44 +58,19 @@ public class ApplicationErrorHandler {
 
     public ApiError buildError(Exception exception, WebRequest request) {
 
-        if (exception instanceof MethodArgumentNotValidException) {
-
-            List<ApiErrorFieldDetail> errors = new ArrayList<>();
-
-            List<ObjectError> allErrors = ((MethodArgumentNotValidException) exception).getAllErrors();
-
-            for (ObjectError error : allErrors) {
-                String fieldName = ((FieldError) error).getField();
-                String errorMessage = error.getDefaultMessage();
-                errors.add(new ApiErrorFieldDetail(fieldName, errorMessage));
-            }
-
-            URI instance = getInstance(request);
-            String traceId = MDC.get(TRACE_ID);
-
-            ApiError apiError = new ApiError();
-
-            apiError.setStatus(400);
-            apiError.setTitle("Bad Request");
-            apiError.setInstance(instance);
-            apiError.setTimestamp(Instant.now());
-            apiError.setTraceId(traceId);
-            apiError.setErrors(errors);
-            return apiError;
+        if (exception instanceof MethodArgumentNotValidException ex) {
+            return buildMethodArgumentNotValidExceptionResponse(request, ex);
         }
-
 
         ApiError apiError = getApiErrorFromFeignResponse(exception);
 
         URI instance = getInstance(request);
 
-        if (apiError != null && apiError.getMsgCod() != null) {
-
+        if (existsApiErrorFromFeignException(apiError)) {
             apiError.setInstance(instance);
-
         } else {
             AppException appException = getAppExceptionAnnotation(exception);
-            HttpStatus status = getStatus(appException);
+            HttpStatus status = getStatus(appException, exception);
             String msgCod = Optional.ofNullable(appException).map(AppException::msgCod).orElse(null);
 
             String title = getTitle(status);
@@ -111,19 +94,53 @@ public class ApplicationErrorHandler {
         return apiError;
     }
 
+    private static boolean existsApiErrorFromFeignException(ApiError apiError) {
+        return apiError != null && (apiError.getMsgCod() != null || apiError.getErrors() != null);
+    }
+
+    private ApiError buildMethodArgumentNotValidExceptionResponse(WebRequest request, MethodArgumentNotValidException ex) {
+        List<ApiErrorFieldDetail> errors = new ArrayList<>();
+
+        List<ObjectError> allErrors = ex.getAllErrors();
+
+        for (ObjectError error : allErrors) {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.add(new ApiErrorFieldDetail(fieldName, errorMessage));
+        }
+
+        URI instance = getInstance(request);
+        String traceId = MDC.get(TRACE_ID);
+
+        ApiError apiError = new ApiError();
+
+        apiError.setStatus(HttpStatus.BAD_REQUEST.value());
+        apiError.setTitle(HttpStatus.BAD_REQUEST.getReasonPhrase());
+        apiError.setInstance(instance);
+        apiError.setTimestamp(Instant.now());
+        apiError.setTraceId(traceId);
+        apiError.setErrors(errors);
+        return apiError;
+    }
+
     private ApiError getApiErrorFromFeignResponse(Exception exception) {
         try {
-            if (exception instanceof FeignException.FeignClientException) {
-                Optional<ByteBuffer> responseBody = ((FeignException.FeignClientException) exception).responseBody();
-                if (responseBody.isPresent()) {
-                    ByteBuffer responseBuffer = responseBody.get();
-                    if (responseBuffer.hasArray()) {
-                        byte[] bytes = new byte[responseBuffer.remaining()];
-                        responseBuffer.get(bytes);
-                        String body = new String(bytes);
-                        return JsonUtil.toObject(body, ApiError.class);
-                    }
+            if (exception instanceof FeignException.FeignClientException feignException) {
+                Optional<ByteBuffer> responseBody = feignException.responseBody();
+                if (responseBody.isEmpty()) {
+                    return null;
                 }
+                ByteBuffer responseBuffer = responseBody.get();
+                if (!responseBuffer.hasArray()) {
+                    return null;
+                }
+                byte[] bytes = new byte[responseBuffer.remaining()];
+                if (bytes.length < 1) {
+                    return null;
+                }
+                responseBuffer.get(bytes);
+                String body = new String(bytes);
+                return JsonUtil.toObject(body, ApiError.class);
             }
         } catch (Exception ex) {
             log.error(ex.getMessage());
@@ -154,9 +171,15 @@ public class ApplicationErrorHandler {
         return status.getReasonPhrase();
     }
 
-    private HttpStatus getStatus(AppException appException) {
+    private HttpStatus getStatus(AppException appException, Exception exception) {
         if (appException != null) {
             return HttpStatus.valueOf(appException.httpStatusCod());
+        }
+        if (exception instanceof AccessDeniedException) {
+            return HttpStatus.FORBIDDEN;
+        }
+        if (exception instanceof FeignException.FeignClientException ex) {
+            return HttpStatus.valueOf((ex).status());
         }
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
@@ -167,10 +190,10 @@ public class ApplicationErrorHandler {
         String statusCode = String.valueOf(status.value());
         String methodHttp = this.getHttpMethod(request);
         String path = this.getInstance(request).getPath();
-        String user = "null";
+        String user = this.getUser(request);
         String detail = this.getDetails(msgCod, exception);
         String exceptionMessageDetail = exception.getMessage();
-        var stackTraceDetails = this.getStackTraceDetails(exception);
+        StackTraceDetails stackTraceDetails = this.getStackTraceDetails(exception);
 
         String logDetails = "{" +
                 "\n status=" + statusCode + '\'' +
@@ -186,7 +209,20 @@ public class ApplicationErrorHandler {
                 ",\n exceptionName='" + stackTraceDetails.exceptionName() + '\'' +
                 ",\n cause='" + stackTraceDetails.cause() + '\'' +
                 "\n}";
+
         this.printLog(msgCod, logDetails, exception);
+    }
+
+    private String getUser(WebRequest request) {
+        JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) request.getUserPrincipal();
+        if (jwtAuthenticationToken == null) {
+            return null;
+        }
+        Jwt jwt = (Jwt) jwtAuthenticationToken.getPrincipal();
+        if (jwt == null) {
+            return null;
+        }
+        return jwt.getClaim("name");
     }
 
     private void printLog(String msgCod, String logDetails, Exception exception) {
@@ -201,7 +237,6 @@ public class ApplicationErrorHandler {
                                         
                     --------------------------------- Api exception ---------------------------------------
                     {}
-                    StackTrace:
                     ---------------------------------------------------------------------------------------""", logDetails, exception);
         }
     }

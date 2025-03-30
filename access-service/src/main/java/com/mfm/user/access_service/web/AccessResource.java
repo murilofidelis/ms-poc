@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ public class AccessResource {
     private final AccessService accessService;
 
     @PostMapping
+    @Secured("ROLE_MS_WRITE")
     public ResponseEntity<DAccess> create(@RequestBody @Valid DAccess access) {
         log.info("create access ...");
         DAccess userSaveSave = accessService.create(access);

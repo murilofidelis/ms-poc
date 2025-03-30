@@ -60,6 +60,11 @@ spring:
             requestInterceptors:
               - com.mfm.user.user_service.client.interceptor.AccessInterceptor
             #errorDecoder: com.mfm.user.user_service.client.decode.AccessErrorDecoder
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/ms-poc-realm/protocol/openid-connect/certs
 
 management:
   endpoints:
