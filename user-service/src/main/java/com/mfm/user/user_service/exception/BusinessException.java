@@ -1,12 +1,15 @@
 package com.mfm.user.user_service.exception;
 
-public class BusinessException extends RuntimeException{
+public class BusinessException extends RuntimeException {
 
-    public BusinessException(String message) {
-        super(message);
+    private final MessageKey key;
+
+    public BusinessException(MessageKey key) {
+        super();
+        this.key = key;
     }
 
-    public BusinessException(String message, Throwable cause) {
-        super(message, cause);
+    public MessageKey getKey() {
+        return key;
     }
 }

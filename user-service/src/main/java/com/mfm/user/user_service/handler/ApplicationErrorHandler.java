@@ -1,5 +1,8 @@
 package com.mfm.user.user_service.handler;
 
+import com.mfm.user.user_service.exception.BusinessException;
+import com.mfm.user.user_service.exception.MessageKey;
+import com.mfm.user.user_service.security.SecurityUtil;
 import com.mfm.user.user_service.util.JsonUtil;
 import com.mfm.user.user_service.util.Message;
 import com.mfm.user.user_service.util.PackageClassLoader;
@@ -8,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -70,7 +71,7 @@ public class ApplicationErrorHandler {
         } else {
             AppException appException = getAppExceptionAnnotation(exception);
             HttpStatus status = getStatus(appException, exception);
-            String msgCod = Optional.ofNullable(appException).map(AppException::msgCod).orElse(null);
+            String msgCod = getMsgCod(exception, appException);
 
             String title = getTitle(status);
 
@@ -91,6 +92,18 @@ public class ApplicationErrorHandler {
         this.createLog(HttpStatus.valueOf(apiError.getStatus()), apiError.getMsgCod(), exception, request);
 
         return apiError;
+    }
+
+    private String getMsgCod(Exception exception, AppException appException) {
+        return Optional.ofNullable(appException).map(AppException::msgCod)
+                .orElseGet(() -> getMessageCodFromBusinessException(exception));
+    }
+
+    private String getMessageCodFromBusinessException(Exception exception) {
+        if (exception instanceof BusinessException ex) {
+            return Optional.ofNullable(ex.getKey()).map(MessageKey::getKeyMessage).orElse(null);
+        }
+        return null;
     }
 
     private static boolean existsApiErrorFromFeignException(ApiError apiError) {
@@ -180,6 +193,9 @@ public class ApplicationErrorHandler {
         if (exception instanceof FeignException.FeignClientException ex) {
             return HttpStatus.valueOf((ex).status());
         }
+        if (exception instanceof BusinessException ex) {
+            return Optional.ofNullable(ex.getKey()).map(MessageKey::getStatus).orElse(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
@@ -189,7 +205,7 @@ public class ApplicationErrorHandler {
         String statusCode = String.valueOf(status.value());
         String methodHttp = this.getHttpMethod(request);
         String path = this.getInstance(request).getPath();
-        String user = this.getUser(request);
+        String user = this.getUser();
         String detail = this.getDetails(msgCod, exception);
         String exceptionMessageDetail = exception.getMessage();
         StackTraceDetails stackTraceDetails = this.getStackTraceDetails(exception);
@@ -212,16 +228,8 @@ public class ApplicationErrorHandler {
         this.printLog(msgCod, logDetails, exception);
     }
 
-    private String getUser(WebRequest request) {
-        JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) request.getUserPrincipal();
-        if (jwtAuthenticationToken == null) {
-            return null;
-        }
-        Jwt jwt = (Jwt) jwtAuthenticationToken.getPrincipal();
-        if (jwt == null) {
-            return null;
-        }
-        return jwt.getClaim("name");
+    private String getUser() {
+        return SecurityUtil.getUserNameAuthenticated();
     }
 
     private void printLog(String msgCod, String logDetails, Exception exception) {
