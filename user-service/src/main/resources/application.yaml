@@ -14,6 +14,8 @@ server:
 spring:
   application:
     name: user-service
+  profiles:
+    active: dev
   messages:
     basename: i18n/messages
   datasource:
@@ -77,3 +79,16 @@ javers:
   sqlSchemaManagementEnabled: true
   sqlGlobalIdCacheDisabled: false
   objectAccessHook: org.javers.hibernate.integration.HibernateUnproxyObjectAccessHook
+
+---
+
+spring:
+  profiles:
+    active: cloud
+  datasource:
+    url: jdbc:postgresql://postgres_db:5432/db_01?currentSchema=ms_user
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/ms-poc-realm/protocol/openid-connect/certs
