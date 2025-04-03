@@ -14,10 +14,9 @@ server:
 spring:
   application:
     name: user-service
-  profiles:
-    active: dev
   messages:
     basename: i18n/messages
+    encoding: UTF-8
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
@@ -81,10 +80,11 @@ javers:
   objectAccessHook: org.javers.hibernate.integration.HibernateUnproxyObjectAccessHook
 
 ---
-
 spring:
-  profiles:
-    active: cloud
+  config:
+    activate:
+      on-profile: "cloud"
+
   datasource:
     url: jdbc:postgresql://postgres_db:5432/db_01?currentSchema=ms_user
   security:
@@ -92,3 +92,7 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: http://keycloak:8080/realms/ms-poc-realm/protocol/openid-connect/certs
+
+server:
+  servlet:
+    context-path: /

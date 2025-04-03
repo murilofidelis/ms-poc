@@ -25,3 +25,5 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     SPRING_PROFILES_ACTIVE=cloud
 
 ENTRYPOINT ["java","org.springframework.boot.loader.launch.JarLauncher"]
+
+# docker build -t dev/user-api:v1 .

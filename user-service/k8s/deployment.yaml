@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-api
+  labels:
+    app: user-api
+spec:
+  selector:
+    matchLabels:
+      app: user-api
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "user-api"
+    spec:
+      containers:
+        - name: user-api
+          image: "dev/user-api:v2"
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: user-api-env
+          resources:
+            requests: # minimo reservado
+              cpu: "256m"
+              memory: 250Mi
+            limits:
+              cpu: "500m" #milésimo de núcleo 500/1000= 50% de um núcleo
+              memory: 512Mi
+          startupProbe:   # Indica se o aplicativo dentro do Container foi iniciado
+            httpGet:
+              path: /actuator/health
+              port: 80
+            periodSeconds: 30
+            failureThreshold: 30
+          readinessProbe: #Indica se o Container está pronto para atender as requisições.
+            httpGet:
+              path: /actuator/health/readiness
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 1
+          livenessProbe: # Indica se o Container está rodando
+            httpGet:
+              path: /actuator/health/liveness
+              port: 80
+            periodSeconds: 10
+            failureThreshold: 1 # quantidade de vezes que deve falhar para reiniciar o pod
+            timeoutSeconds: 1
+            successThreshold: 1
