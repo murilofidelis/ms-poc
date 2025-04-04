@@ -1,36 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-api
+  name: access-api
   labels:
-    app: user-api
+    app: access-api
 spec:
   selector:
     matchLabels:
-      app: user-api
+      app: access-api
   replicas: 2
   template:
     metadata:
       labels:
-        app: "user-api"
+        app: "access-api"
     spec:
       containers:
-        - name: user-api
-          image: "dev/user-api:v3"
+        - name: access-api
+          image: "dev/access-api:v2"
           imagePullPolicy: Never
           envFrom:
             - configMapRef:
-                name: user-api-env
+                name: access-api-env
           env:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: user-api-secret
+                  name: access-api-secret
                   key: db-user
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: user-api-secret
+                  name: access-api-secret
                   key: db-password
           resources:
             requests: # minimo reservado

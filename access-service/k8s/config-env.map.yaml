@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-api-env
+  name: access-api-env
 data:
   SPRING_PROFILES_ACTIVE: "cloud"
   LOG_LEVEL: "INFO"
   PORT: "80"
   CLIENT_LOG_LEVEL: "DEBUG"
-  ACCESS_API: "http://access-api-service"

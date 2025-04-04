@@ -15,11 +15,12 @@ spring:
     name: access-service
   messages:
     basename: i18n/messages
+    encoding: UTF-8
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_access
-    username: postgres
-    password: 123456
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     database: POSTGRESQL
@@ -43,4 +44,20 @@ spring:
         jwt:
           jwk-set-uri: http://localhost:8080/realms/ms-poc-realm/protocol/openid-connect/certs
 
+---
 
+spring:
+  config:
+    activate:
+      on-profile: "cloud"
+  datasource:
+    url: jdbc:postgresql://postgres_db:5432/db_01?currentSchema=ms_access
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/ms-poc-realm/protocol/openid-connect/certs
+
+server:
+  servlet:
+    context-path: /

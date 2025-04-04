@@ -20,8 +20,8 @@ spring:
   datasource:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
-    username: postgres
-    password: 123456
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     database: POSTGRESQL
@@ -84,7 +84,12 @@ spring:
   config:
     activate:
       on-profile: "cloud"
-
+  cloud:
+    openfeign:
+      client:
+        config:
+          access-client:
+            url: ${ACCESS_API}
   datasource:
     url: jdbc:postgresql://postgres_db:5432/db_01?currentSchema=ms_user
   security:

@@ -16,12 +16,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
 
+    private static final String[] ALLOWED_PATHS = {"/actuator/**"};
+
     private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
 
     @Bean
     SecurityFilterChain resourceServerSecurityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                .authorizeHttpRequests(authorize -> authorize.requestMatchers(ALLOWED_PATHS).permitAll())
                 .authorizeHttpRequests((auth) -> auth.anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwtDecoder -> jwtDecoder.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter)));
 
