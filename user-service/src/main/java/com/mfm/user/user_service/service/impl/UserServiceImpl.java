@@ -24,6 +24,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
     @Override
+    public DUser getById(int id) {
+        return repository.findById(id)
+                .map(DUser::new)
+                .orElse(null);
+    }
+
+    @Override
     public DUser create(DUser user) {
         var accessRequest = createAccess(user);
 

@@ -22,6 +22,11 @@ spring:
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    schema:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/changelog/1.0-create_schema.sql
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     database: POSTGRESQL
@@ -36,7 +41,7 @@ spring:
       dialect: org.hibernate.dialect.PostgreSQLDialect
       ddl-auto: 'none'
   liquibase:
-    enabled: false
+    enabled: true
     default-schema: ms_user
     change-log: classpath:db/changelog-master.xml
   cloud:

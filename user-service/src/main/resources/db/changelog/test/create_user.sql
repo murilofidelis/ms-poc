@@ -1,0 +1,1 @@
+INSERT INTO tb_user values (1000, 'Murilo', 'test@test.com', 1);

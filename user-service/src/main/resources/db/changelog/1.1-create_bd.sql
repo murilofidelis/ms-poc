@@ -1,4 +1,4 @@
-CREATE table ms_user.TB_USER (
+CREATE table TB_USER (
                 id INTEGER NOT NULL,
                 name varchar(60) NOT NULL,
                 email varchar(200),

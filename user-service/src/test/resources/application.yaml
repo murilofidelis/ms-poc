@@ -1,0 +1,62 @@
+server:
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: user-service
+  profiles:
+    active: test
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:test_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: sa
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    database: H2
+    show-sql: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: 'none'
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-test.xml
+  cloud:
+    openfeign:
+      compression:
+        request:
+          enabled: true
+        response:
+          enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
+            loggerLevel: full
+            requestInterceptors:
+              - com.mfm.user.user_service.client.interceptor.DefaultInterceptor
+          access-client:
+            url: http://localhost:8888/access/api
+            defaultRequestHeaders:
+              Authorization: none
+            requestInterceptors:
+              - com.mfm.user.user_service.client.interceptor.AccessInterceptor
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/ms-poc-realm/protocol/openid-connect/certs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers
+
+javers:
+  sqlSchemaManagementEnabled: false
+  auditableAspectEnabled: false
+  springDataAuditableRepositoryAspectEnabled: false
+

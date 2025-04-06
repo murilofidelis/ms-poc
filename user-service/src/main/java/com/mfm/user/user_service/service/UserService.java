@@ -8,4 +8,6 @@ public interface UserService {
     DUser create(DUser user);
 
     DUser update(int id, DUserUpdate user);
+
+    DUser getById(int id);
 }
