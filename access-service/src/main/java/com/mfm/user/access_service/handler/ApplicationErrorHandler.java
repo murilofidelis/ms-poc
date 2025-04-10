@@ -1,5 +1,6 @@
 package com.mfm.user.access_service.handler;
 
+import com.mfm.user.access_service.security.SecurityUtil;
 import com.mfm.user.access_service.util.JsonUtil;
 import com.mfm.user.access_service.util.Message;
 import com.mfm.user.access_service.util.PackageClassLoader;
@@ -8,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -190,7 +189,7 @@ public class ApplicationErrorHandler {
         String statusCode = String.valueOf(status.value());
         String methodHttp = this.getHttpMethod(request);
         String path = this.getInstance(request).getPath();
-        String user = this.getUser(request);
+        String user = SecurityUtil.getUserNameAuthenticated();
         String detail = this.getDetails(msgCod, exception);
         String exceptionMessageDetail = exception.getMessage();
         StackTraceDetails stackTraceDetails = this.getStackTraceDetails(exception);
@@ -211,18 +210,6 @@ public class ApplicationErrorHandler {
                 "\n}";
 
         this.printLog(msgCod, logDetails, exception);
-    }
-
-    private String getUser(WebRequest request) {
-        JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) request.getUserPrincipal();
-        if (jwtAuthenticationToken == null) {
-            return null;
-        }
-        Jwt jwt = (Jwt) jwtAuthenticationToken.getPrincipal();
-        if (jwt == null) {
-            return null;
-        }
-        return jwt.getClaim("name");
     }
 
     private void printLog(String msgCod, String logDetails, Exception exception) {
