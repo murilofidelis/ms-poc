@@ -10,6 +10,12 @@ server:
   port: ${PORT:8081}
   servlet:
     context-path: /user/api
+  tomcat:
+    connection-timeout: 1000
+
+dynamic:
+  query:
+    timeout: ${DINAMIC_TIME_OUT:5000}
 
 spring:
   application:
@@ -22,7 +28,6 @@ spring:
     url: jdbc:postgresql://localhost:5432/db_01?currentSchema=ms_user
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-    schema:
   sql:
     init:
       mode: always
@@ -37,6 +42,10 @@ spring:
         format_sql: true
         jdbc.batch_size: 50
         order_inserts: true
+      jakarta:
+        persistence:
+          query:
+            timeout: ${QUERY_TIME_OUT:3000}
     hibernate:
       dialect: org.hibernate.dialect.PostgreSQLDialect
       ddl-auto: 'none'
@@ -55,7 +64,7 @@ spring:
         config:
           default:
             connectTimeout: 5000
-            readTimeout: 5000
+            readTimeout: 10000
             loggerLevel: full
             requestInterceptors:
               - com.mfm.user.user_service.client.interceptor.DefaultInterceptor
@@ -67,16 +76,50 @@ spring:
               - com.mfm.user.user_service.client.interceptor.AccessInterceptor
             #errorDecoder: com.mfm.user.user_service.client.decode.AccessErrorDecoder
   security:
+    user:
+      name: ${SECURITY_USERNAME:client}
+      password: ${SECURITY_PASSWORD:client}
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8080/realms/ms-poc-realm/protocol/openid-connect/certs
+  boot:
+    admin:
+      client:
+        enabled: ${ENABLE_ADMIN_CLIENT:true}
+        url: ${SPRING_ADMIN_API:http://localhost:8089/admin}
+        username: ${SPRING_ADMIN_USERNAME:admin}
+        password: ${SPRING_ADMIN_PASSWORD:admin}
+        instance:
+          # URL base para calcular o service-url com o qual se registrar. O caminho é inferido em tempo de execução e anexado à url base.
+          service-base-url: ${SERVICE_BASE_URL:http://localhost:8081}
+          # Essas informações são passadas ao servidor para que ele possa fazer o acesso aos endpoints do sistema cliente.
+          metadata:
+            user:
+              name: ${SPRING_ADMIN_CLIENT_USERNAME:client}
+              password: ${SPRING_ADMIN_CLIENT_PASSWORD:client}
+        auto-deregistration: true
 
 management:
+  info:
+    env:
+      enabled: true
+  endpoint:
+    env:
+      show-values: ALWAYS
+      post:
+        enabled: true
+    health:
+      show-details: ALWAYS
+      enabled: true
+    configprops:
+      show-values: ALWAYS
+    shutdown:
+      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,loggers
+        include: "*"
 
 javers:
   sqlSchema: ms_user

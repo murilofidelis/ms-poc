@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-api
+  labels:
+    app: admin-api
+spec:
+  selector:
+    matchLabels:
+      app: admin-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "admin-api"
+    spec:
+      containers:
+        - name: admin-api
+          image: "dev/admin-api:v11"
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_CLOUD_KUBERNETES_DISCOVERY_ALL-NAMESPACES
+              value: "true"
+            - name: SPRING_CLOUD_KUBERNETES_DISCOVERY_PRIMARY-PORT-NAME
+              value: "http"
+          envFrom:
+            - configMapRef:
+                name: admin-api-env
+          resources:
+            requests: # minimo reservado
+              cpu: "512m"
+              memory: 512Mi
+            limits:
+              cpu: "1000m" #milésimo de núcleo 1000/1000= 100% de um núcleo
+              memory: 512Mi
+
+# kubectl create clusterrolebinding default-admin --clusterrole cluster-admin --serviceaccount=poc-ms:default

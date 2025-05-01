@@ -13,15 +13,22 @@ spec:
     metadata:
       labels:
         app: "user-api"
+        spring-boot: "true"
     spec:
       containers:
         - name: user-api
-          image: "dev/user-api:v3"
+          image: "dev/user-api:v4"
           imagePullPolicy: Never
           envFrom:
             - configMapRef:
                 name: user-api-env
           env:
+            - name: SPRING_BOOT_ADMIN_CLIENT_INSTANCE_SERVICE-BASE-URL
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SPRING_BOOT_ADMIN_CLIENT_INSTANCE_PREFER-IP
+              value: "true"
             - name: DB_USER
               valueFrom:
                 secretKeyRef:

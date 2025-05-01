@@ -1,0 +1,75 @@
+logging:
+  level:
+    ROOT: INFO
+    web: info
+    org.springframework.cloud.kubernetes: ${KUBERNETS_LOG:TRACE}
+    de.codecentric.boot.admin.discovery.ApplicationDiscoveryListener: ${CODECENTRIC_LOG:DEBUG}
+  include-application-name: false
+  charset:
+    file: utf-8
+
+server:
+  port: ${PORT:8089}
+  use-forward-headers: true
+spring:
+  application:
+    name: ms-admin-server
+  security:
+    user:
+      # Configura o login do servidor.
+      name: ${ADMIN_USERNAME:admin}
+      password: ${ADMIN_PASSWORD:admin}
+  boot:
+    admin:
+      discovery:
+        enabled: true
+      context-path: ${ADMIN_CONTEXT_PATH:/admin}
+      client:
+        # Necessários para que o cliente possa se registrar na api do servidor protegido.
+        username: ${CLIENT_USERNAME:client}
+        password: ${CLIENT_PASSWORD:client}
+        instance:
+          metadata:
+            user:
+              # Necessários para que o servidor possa acessar os endpoints protegidos do cliente.
+              name: ${spring.boot.admin.client.username}
+              password: ${spring.boot.admin.client.password}
+
+
+app:
+  redirect:
+    enable: ${REDIRECT_ENABLE:false}
+    url: ${REDIRECT_URL:/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: "cloud"
+  boot:
+    admin:
+      ui:
+        public-url: ${ADMIN_PUBLIC_URL}
+  cloud:
+    kubernetes:
+      catalog-services-watch:
+        enabled: true
+        catalogServicesWatchDelay: 5000
+        discovery:
+          service-labels:
+            type: actuator
+      discovery:
+        enabled: true
+        instances-metadata:
+          spring-boot: "true"
+        all-namespaces: true
+        primary-port-name: probes
+        service-labels:
+          spring-boot: true

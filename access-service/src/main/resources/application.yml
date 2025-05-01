@@ -39,10 +39,72 @@ spring:
     default-schema: ms_access
     change-log: classpath:db/changelog-master.xml
   security:
+    user:
+      name: client
+      password: client
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: http://localhost:8080/realms/ms-poc-realm/protocol/openid-connect/certs
+  boot:
+    admin:
+      client:
+        enabled: false
+        # URL do servidor que o cliente deve se registrar.
+        url: http://localhost:8089/admin-console
+        username: admin
+        password: admin
+        instance:
+          name: ${spring.application.name}
+          # URL base para calcular o service-url com o qual se registrar. O caminho é inferido em tempo de execução e anexado à url base.
+          service-base-url: http://localhost:8082
+          # Essas informações são passadas ao servidor para que ele possa fazer o acesso aos endpoints do sistema cliente.
+          metadata:
+            user:
+              name: client
+              password: client
+        auto-deregistration: true
+
+app:
+  cors-origins:
+    - http://localhost:8089/admin-console/**
+  cors-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  cors-headers:
+    - Authorization
+    - Content-Type
+    - Content-Length
+    - X-Requested-With
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoint:
+    env:
+      show-values: ALWAYS
+      post:
+        enabled: true
+    health:
+      show-details: ALWAYS
+      enabled: true
+    configprops:
+      show-values: ALWAYS
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      cors:
+        allowed-headers: ${app.cors-headers}
+        allowed-methods: ${app.cors-methods}
+        allowed-origins: ${app.cors-origins}
+
 
 ---
 

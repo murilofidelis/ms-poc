@@ -8,3 +8,5 @@ data:
   PORT: "80"
   CLIENT_LOG_LEVEL: "DEBUG"
   ACCESS_API: "http://access-api-service"
+  SERVICE_BASE_URL: "http://user-api-service"
+  SPRING_ADMIN_API: "http://admin-api-service"

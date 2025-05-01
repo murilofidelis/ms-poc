@@ -9,6 +9,7 @@ import com.mfm.user.user_service.util.PackageClassLoader;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -62,6 +63,10 @@ public class ApplicationErrorHandler {
             return buildMethodArgumentNotValidExceptionResponse(request, ex);
         }
 
+        if (exception instanceof QueryTimeoutException) {
+            return buildTimeOutExceptionResponse(request);
+        }
+
         ApiError apiError = getApiErrorFromFeignResponse(exception);
 
         URI instance = getInstance(request);
@@ -91,6 +96,18 @@ public class ApplicationErrorHandler {
 
         this.createLog(HttpStatus.valueOf(apiError.getStatus()), apiError.getMsgCod(), exception, request);
 
+        return apiError;
+    }
+
+    private ApiError buildTimeOutExceptionResponse(WebRequest request) {
+        URI instance = getInstance(request);
+        String traceId = MDC.get(TRACE_ID);
+        ApiError apiError = new ApiError();
+        apiError.setStatus(HttpStatus.REQUEST_TIMEOUT.value());
+        apiError.setTitle(HttpStatus.REQUEST_TIMEOUT.getReasonPhrase());
+        apiError.setInstance(instance);
+        apiError.setTimestamp(Instant.now());
+        apiError.setTraceId(traceId);
         return apiError;
     }
 

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-api-env
+data:
+  SPRING_PROFILES_ACTIVE: "cloud"
+  SPRING_CLOUD_BOOTSTRAP_ENABLED: "true"
+  PORT: "80"
+  ADMIN_CONTEXT_PATH: "/"
+  ADMIN_PUBLIC_URL: "/admin"
+  REDIRECT_ENABLE: "true"
+  REDIRECT_URL: "/admin"

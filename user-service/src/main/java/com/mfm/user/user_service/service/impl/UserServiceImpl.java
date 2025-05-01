@@ -32,10 +32,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public DUser create(DUser user) {
-        var accessRequest = createAccess(user);
+        log.trace("create ...");
+        log.debug("create new user: {}", user);
+        var accessResponse = createAccess(user);
+
+        log.debug("access created: {}", accessResponse);
 
         User newUser = new User(user);
-        newUser.setIdAccess(accessRequest.getId());
+        newUser.setIdAccess(accessResponse.getId());
 
         User userSave = repository.save(newUser);
 
